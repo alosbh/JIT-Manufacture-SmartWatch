@@ -206,11 +206,7 @@ void SetupUI()
    // RISK LABEL
     
     lbl_risk = lv_label_create(bg_card, NULL);
-<<<<<<< HEAD
     lv_label_set_text(lbl_risk, "RISCO");
-=======
-    lv_label_set_text(lbl_risk, "RISK");
->>>>>>> ce14ea13e6074bf73f13af529d83474aba35eef4
     lv_obj_align(lbl_risk, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 40);
 
     // CALL TIME LABEL
@@ -490,29 +486,16 @@ void setup() {
     Serial.println(calls[counter].workstation);
     // strcpy(chamados[(counter*4)+0],jsonObj["workstation"]);
     Serial.println("*********  ENDEREÇO RISK  *********");
-<<<<<<< HEAD
-=======
-    // Serial.println((long)&calls[counter].risk);
-    
->>>>>>> ce14ea13e6074bf73f13af529d83474aba35eef4
     calls[counter].risk = jsonObj["risk"];
     Serial.println((long)&calls[counter].risk);
     Serial.println(calls[counter].risk);
     // strcpy(chamados[(counter*4)+1],jsonObj["risk"]);
     Serial.println("*********  ENDEREÇO CALLTIME  *********");
-<<<<<<< HEAD
-=======
-    // Serial.println((long)&calls[counter].calltime);
->>>>>>> ce14ea13e6074bf73f13af529d83474aba35eef4
     calls[counter].calltime = jsonObj["calltime"];
     Serial.println((long)&calls[counter].calltime);
     Serial.println(calls[counter].calltime);
     // strcpy(chamados[(counter*4)+2],jsonObj["calltime"]);
     Serial.println("*********  ENDEREÇO DESCRIPTION  *********");
-<<<<<<< HEAD
-=======
-    // Serial.println((long)&calls[counter].description);
->>>>>>> ce14ea13e6074bf73f13af529d83474aba35eef4
     calls[counter].description = jsonObj["description"];
     Serial.println((long)&calls[counter].description);
     Serial.println(calls[counter].description);
@@ -520,17 +503,10 @@ void setup() {
   printCard(counter);
   counter = counter +1;
   atual = counter;
-<<<<<<< HEAD
   Serial.println();
   Serial.print(atual);
   Serial.print("/");
   Serial.print(counter);
-=======
-  // Serial.println();
-  // Serial.print(atual);
-  // Serial.print("/");
-  // Serial.print(counter);
->>>>>>> ce14ea13e6074bf73f13af529d83474aba35eef4
   
 
 
