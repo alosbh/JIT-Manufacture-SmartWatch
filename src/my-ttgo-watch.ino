@@ -495,7 +495,7 @@ void setup() {
     Serial.println((long)&calls[counter].calltime);
     Serial.println(calls[counter].calltime);
     // strcpy(chamados[(counter*4)+2],jsonObj["calltime"]);
-    Serial.println("*********  ENDEREÇO DESCRIPTION  *********");
+    Serial.println("*********  ADDRESSS DESCRIPTION  *********");
     calls[counter].description = jsonObj["description"];
     Serial.println((long)&calls[counter].description);
     Serial.println(calls[counter].description);
