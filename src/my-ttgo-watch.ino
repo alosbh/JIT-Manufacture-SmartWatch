@@ -26,7 +26,7 @@ static lv_style_t stl_topline;
 static lv_style_t stl_clock;
 static lv_style_t stl_transp;
 
-
+static lv_obj_t * bg_card;
 static lv_obj_t * lbl_workstation;
 static lv_obj_t * lbl_risk;
 static lv_obj_t * lbl_calltime;
@@ -34,15 +34,23 @@ static lv_obj_t * lbl_description;
 
 static lv_obj_t * lbl_actualcard;
 static lv_obj_t * lbl_totalcard;
+static lv_obj_t * lbl_count_separator;
 
 static lv_obj_t * btn_back;
 static lv_obj_t * btn_next;
 
-const char* ssid = "2.4G Netvirtua apto 305.";
-const char* password = "http3333";
+// const char* ssid = "2.4G Netvirtua apto 305.";
+// const char* password = "http3333";
 
-char bufatual [1];
-char buftotal [1];
+// const char* ssid = "Moto G Play 7041";
+// const char* password = "isabela1";
+
+const char* ssid = "JAB_RASP0001";
+const char* password = "g4keKDI2RkXQT";
+
+
+char bufatual [2];
+char buftotal [2];
 const char* PARAM_MESSAGE = "message";
 typedef struct {
     lv_obj_t *hour;
@@ -190,12 +198,21 @@ void SetupUI()
     lv_obj_align(line1, NULL, LV_ALIGN_IN_TOP_MID, 0, 35);
     
     // CARD BACKGROUND
-    lv_obj_t * bg_card;
+
+    // LABEL NO CARD
+    lv_obj_t * lbl_nocard;
+    lbl_nocard = lv_label_create(view, NULL);
+    lv_label_set_text(lbl_nocard, "Sem chamados.");
+    lv_obj_align(lbl_nocard, view, LV_ALIGN_CENTER, 0, 0);
+    
     bg_card = lv_obj_create(view, NULL);
     lv_obj_set_pos(bg_card, 10, 40);
     lv_obj_set_width(bg_card,220);
     lv_obj_set_height(bg_card,166);
      lv_obj_add_style(bg_card, LV_OBJ_PART_MAIN, &stl_bg_card);
+
+
+    
 
     // WORKSTATION LABEL
      
@@ -252,7 +269,7 @@ void SetupUI()
     lv_obj_add_style(btn2, LV_OBJ_PART_MAIN, &stl_btn2);
 
 
-    lv_obj_t * lbl_count_separator;
+    
     lbl_count_separator = lv_label_create(view, NULL);
     lv_label_set_text(lbl_count_separator, "/");
     lv_obj_align(lbl_count_separator, NULL, LV_ALIGN_IN_BOTTOM_MID, 0, -5);
@@ -287,6 +304,13 @@ void SetupUI()
     lv_label_set_text(lbl_btn_next, LV_SYMBOL_RIGHT);
     lv_obj_set_event_cb(btn_next, btn2_handler);
     
+    lv_obj_set_hidden(bg_card, true);
+    // lv_obj_set_hidden(lbl_count_separator, true);
+    // lv_obj_set_hidden(lbl_actualcard, true);
+    // lv_obj_set_hidden(lbl_totalcard, true);
+    // lv_obj_set_hidden(btn_back, true);
+    // lv_obj_set_hidden(btn_next, true);
+    
 
     // lv_task_create([](lv_task_t *t) {
 
@@ -302,6 +326,38 @@ void SetupUI()
 
     
 }
+static void toggle_Cards_On(){
+
+
+        
+   
+        Serial.println("Habilitando:");
+        
+        lv_obj_set_hidden(bg_card, false);
+        // lv_obj_set_hidden(lbl_count_separator, false);
+        // lv_obj_set_hidden(lbl_actualcard, false);
+        // lv_obj_set_hidden(lbl_totalcard, false);
+        // lv_obj_set_hidden(btn_back, false);
+        // lv_obj_set_hidden(btn_next, false);
+        
+
+
+}
+static void toggle_Cards_Off(){
+
+
+        Serial.println("Apagando:");
+        lv_obj_set_hidden(bg_card, true);
+        // lv_obj_set_hidden(lbl_count_separator, true);
+        // lv_obj_set_hidden(lbl_actualcard, true);
+        // lv_obj_set_hidden(lbl_totalcard, true);
+        // lv_obj_set_hidden(btn_back, true);
+        // lv_obj_set_hidden(btn_next, true);
+   
+       
+
+
+}
 
 
 static void btn1_handler(lv_obj_t *obj, lv_event_t event)
@@ -310,17 +366,15 @@ static void btn1_handler(lv_obj_t *obj, lv_event_t event)
         Serial.println("Clicked\n");
     
     atual = atual-1;
-    sprintf (bufatual, "%d",atual);
-  lv_label_set_text(lbl_actualcard,bufatual);
+   Serial.println("back");
   Serial.println();
   Serial.print(atual);
   Serial.print("/");
   Serial.print(counter);
 
     printCard(atual-1);
-    } else if (event == LV_EVENT_VALUE_CHANGED) {
-        Serial.printf("Toggled\n");
-    }
+    } 
+    
 }
 static void btn2_handler(lv_obj_t *obj, lv_event_t event)
 {
@@ -328,17 +382,16 @@ static void btn2_handler(lv_obj_t *obj, lv_event_t event)
         Serial.println("Clicked\n");
     
     atual = atual+1;
-    sprintf (bufatual, "%d",atual);
-  lv_label_set_text(lbl_actualcard,bufatual);
+    Serial.println("next");
   Serial.println();
   Serial.print(atual);
   Serial.print("/");
   Serial.print(counter);
 
     printCard(atual-1);
-    } else if (event == LV_EVENT_VALUE_CHANGED) {
-        Serial.printf("Toggled\n");
     }
+   
+    
 }
 
 static void removefromArray(lv_obj_t *obj, lv_event_t event){
@@ -348,25 +401,10 @@ static void removefromArray(lv_obj_t *obj, lv_event_t event){
     uint8_t pos = atual-1;
     uint8_t tam = counter-1;
     uint8_t i;
-    Serial.println();
-    Serial.print("Posição inicial no array: ");
-    Serial.print(pos);
-    Serial.println();
-    Serial.print("Posição maxima do array: ");
-    Serial.print(tam);
 
 
-    Serial.println();
-    
-    
-    
-    
     for(i=pos; i<tam; i++)
           {
-              Serial.print((i*4)+0);
-               Serial.print("   =>   ");
-               Serial.print((i*4)+4);
-               Serial.println();
               strcpy(chamados[(i*4)+0],chamados[(i*4)+4]);
               strcpy(chamados[(i*4)+1],chamados[(i*4)+5]);
               strcpy(chamados[(i*4)+2],chamados[(i*4)+6]);
@@ -375,58 +413,75 @@ static void removefromArray(lv_obj_t *obj, lv_event_t event){
 
 
     counter--;
-    Serial.println();
-    Serial.print("Quantidade de objetos agora é ");
-    Serial.print(counter);
 
     if(atual==counter+1){
-      Serial.println("Ultimo da lista!");
+
       atual = counter;
     }
-    sprintf (buftotal, "%d",counter);
-  lv_label_set_text(lbl_totalcard,buftotal);
-  sprintf (bufatual, "%d",atual);
-  lv_label_set_text(lbl_actualcard,bufatual);
-  Serial.println();
-    Serial.print("Objeto a ser impresso: ");
-    Serial.print(atual);
+
     printCard(atual-1);
+  }
+  if(counter==0){
+      toggle_Cards_Off();
   }
   
 };
   
 
 
-
 void printCard(uint8_t posic){
 
+char const * baixo = "BAIXO";
+    char const * medio = "MEDIO";
+    char const * alto = "ALTO";
 
-Serial.println("\n*************** imprimir card **************\n");
+    char * risco_atual = lv_label_get_text(lbl_risk);
 
-    lv_label_set_text(lbl_workstation,calls[counter].workstation);
-  lv_label_set_text(lbl_risk,calls[counter].risk);
-  lv_label_set_text(lbl_calltime,calls[counter].calltime);
-  lv_label_set_text(lbl_description,calls[counter].description);
-Serial.println("///////   Posição no array://////////");
-Serial.println(posic);
-// // Serial.println("///////   Endereço objeto://////////");
-// // Serial.println((long)&calls[counter]);
-//   Serial.println("/////   workstation  ///////");
-//   Serial.println(calls[posic].workstation);
-//   Serial.println((long)&calls[posic].workstation);
-  Serial.println(chamados[(posic*4)+0]);
-//   Serial.println("/////   risk  ///////");
-//   Serial.println(calls[posic].risk);
-//   Serial.println((long)&calls[posic].risk);
-  Serial.println(chamados[(posic*4)+1]);
-//   Serial.println("/////   calltime  ///////");
-//   Serial.println(calls[posic].calltime);
-//   Serial.println((long)&calls[posic].calltime);
-  Serial.println(chamados[(posic*4)+2]);
-//   Serial.println("/////   description  ///////");
-//   Serial.println(calls[posic].description);
-//   Serial.println((long)&calls[posic].description);
-  Serial.println(chamados[(posic*4)+3]);
+// if(strcmp(medio, risco_atual)==0){
+//     Serial.println("COLORI DE AMARELO");
+//     lv_style_set_bg_color(&stl_bg_card, LV_OBJ_PART_MAIN, lv_color_make(0xff, 0xfc, 0xb2));
+// }
+// else if(strcmp(alto, risco_atual)==0){
+//     Serial.println("COLORI DE VEERMELHO");
+//     lv_style_set_bg_color(&stl_bg_card, LV_OBJ_PART_MAIN, lv_color_make(0xff, 0xbf, 0xbf));
+// }
+// else if(strcmp(baixo, risco_atual)==0){
+//     Serial.println("COLORI DE VERDE");
+//     lv_style_set_bg_color(&stl_bg_card, LV_OBJ_PART_MAIN, lv_color_make(0xd0, 0xff, 0xbf));
+// }
+    lv_label_set_text(lbl_workstation,chamados[(posic*4)+0]);
+    lv_label_set_text(lbl_risk,chamados[(posic*4)+1]);
+    lv_label_set_text(lbl_calltime,chamados[(posic*4)+2]);
+    lv_label_set_text(lbl_description,chamados[(posic*4)+3]);
+
+    
+
+    
+
+    Serial.println();
+    Serial.print("Eh BAIXO: ");
+    Serial.println(strcmp(baixo, risco_atual));
+    Serial.print("Eh MEDIO: ");
+    Serial.println(strcmp(medio, risco_atual));
+    Serial.print("Eh ALTO: ");
+    Serial.println(strcmp(alto, risco_atual));
+    
+    Serial.println(baixo);
+    Serial.println(risco_atual);
+
+
+
+Serial.println();
+    Serial.print(atual);
+    Serial.print("/");
+    Serial.print(counter);
+    Serial.println();
+    sprintf (bufatual, "%d",atual);
+  sprintf (buftotal, "%d",counter);
+  lv_label_set_text(lbl_actualcard,bufatual);
+  lv_label_set_text(lbl_totalcard,buftotal);
+
+  
 }
 
 void setup() {
@@ -440,13 +495,14 @@ void setup() {
     ttgo->lvgl_begin();
     SetupUI();
     
+    ttgo->tft->drawString("Esperando Wifi",80,120);
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
     
     while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
+        delay(500);
+        Serial.print(".");
+    }
 
     Serial.print("IP Address: ");
     Serial.println(WiFi.localIP());
@@ -454,80 +510,33 @@ void setup() {
     server.onNotFound(notFound);
 
     AsyncCallbackJsonWebHandler* handler = new AsyncCallbackJsonWebHandler("/rest/endpoint", [](AsyncWebServerRequest *request, JsonVariant &json) {
-  JsonObject jsonObj = json.as<JsonObject>();
-
-   ttgo->motor->onec();
-  lv_label_set_text(lbl_workstation,jsonObj["workstation"]);
-  lv_label_set_text(lbl_risk,jsonObj["risk"]);
-  lv_label_set_text(lbl_calltime,jsonObj["calltime"]);
-  lv_label_set_text(lbl_description,jsonObj["description"]);
-
-  Serial.println("*********  NOVO CARD  *********");
   
+        JsonObject jsonObj = json.as<JsonObject>();
 
-    Serial.println("Valor counter");
-    Serial.println(counter);
-    // novocard = createCard(jsonObj["workstation"],jsonObj["workstation"],jsonObj["workstation"],jsonObj["workstation"]);
-  // Serial.println("Endereço newcard");
-  // Serial.println((long)&novocard);
-
-    // str_card_t newcard;
-    // newcard.workstation = jsonObj["workstation"];
-    // newcard.risk = jsonObj["risk"];
-    // newcard.calltime = jsonObj["calltime"];
-    // newcard.description = jsonObj["description"];
-    // calls[counter] = novocard;
-    
-    
-    // Serial.println("*********  ENDEREÇO WORKSTATION  *********");
-    
-    // calls[counter].workstation = jsonObj["workstation"];
-    // Serial.println((long)&calls[counter].workstation);
-    // Serial.println(calls[counter].workstation);
-    strcpy(chamados[(counter*4)+0],jsonObj["workstation"]);
-    // Serial.println("*********  ENDEREÇO RISK  *********");
-    // calls[counter].risk = jsonObj["risk"];
-    // Serial.println((long)&calls[counter].risk);
-    // Serial.println(calls[counter].risk);
-    strcpy(chamados[(counter*4)+1],jsonObj["risk"]);
-    // Serial.println("*********  ENDEREÇO CALLTIME  *********");
-    // calls[counter].calltime = jsonObj["calltime"];
-    // Serial.println((long)&calls[counter].calltime);
-    // Serial.println(calls[counter].calltime);
-    strcpy(chamados[(counter*4)+2],jsonObj["calltime"]);
-    // Serial.println("*********  ADDRESSS DESCRIPTION  *********");
-    // calls[counter].description = jsonObj["description"];
-    // Serial.println((long)&calls[counter].description);
-    // Serial.println(calls[counter].description);
-    strcpy(chamados[(counter*4)+3],jsonObj["description"]);
-  printCard(counter);
-  counter = counter +1;
-  atual = counter;
-  Serial.println();
-  Serial.print(atual);
-  Serial.print("/");
-  Serial.print(counter);
-  
+        ttgo->motor->onec();
 
 
-sprintf (buftotal, "%d",counter);
-  lv_label_set_text(lbl_totalcard,buftotal);
-  lv_label_set_text(lbl_actualcard,buftotal);
-  
+        strcpy(chamados[(counter*4)+0],jsonObj["workstation"]);
 
-  
+        strcpy(chamados[(counter*4)+1],jsonObj["risk"]);
 
-  request->send(200);
-});
-server.addHandler(handler);
+        strcpy(chamados[(counter*4)+2],jsonObj["calltime"]);
+
+        strcpy(chamados[(counter*4)+3],jsonObj["description"]);
+        counter = counter +1;
+        atual = counter;
+        printCard(counter-1);
+        
+        toggle_Cards_On();
+        
+        request->send(200);
+
+    });
+
+    server.addHandler(handler);
 
     server.begin();
-    log_d("Total heap: %d", ESP.getHeapSize());
-  log_d("Free heap: %d", ESP.getFreeHeap());
-  log_d("Used heap: %d", ESP.getHeapSize() - ESP.getFreeHeap());
-  log_d("Total PSRAM: %d", ESP.getPsramSize());
-  log_d("Free PSRAM: %d", ESP.getFreePsram());
-  log_d("Used PSRAM: %d", ESP.getPsramSize() - ESP.getFreePsram());
+  
 }
 
 void loop() {
