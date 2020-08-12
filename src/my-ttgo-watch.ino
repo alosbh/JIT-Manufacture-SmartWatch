@@ -12,6 +12,9 @@
 
 TTGOClass *ttgo;
 PCF8563_Class *rtc;
+AXP20X_Class *power;
+bool irq = false;
+bool BLisOn = false;
 
 AsyncWebServer server(80);
 
@@ -51,6 +54,8 @@ const char* password = "g4keKDI2RkXQT";
 
 char bufatual [2];
 char buftotal [2];
+char bufbat[8];
+float batlevel;
 const char* PARAM_MESSAGE = "message";
 typedef struct {
     lv_obj_t *hour;
@@ -177,17 +182,27 @@ void SetupUI()
     lv_label_set_text(jabil_logo, "JABIL");
     lv_obj_align(jabil_logo, view, LV_ALIGN_IN_TOP_LEFT, 10, 5);
 
+    lv_obj_t * lbl_percentsignal;
+    lbl_percentsignal = lv_label_create(view, NULL);
+    // lv_obj_add_style(lbl_percentsignal, LV_OBJ_PART_MAIN, &stl_clock);
+    lv_label_set_text(lbl_percentsignal, "%");
+    lv_obj_align(lbl_percentsignal, view, LV_ALIGN_IN_TOP_RIGHT, -5, 0);
+
     // CLOCK MINUTES
     g_data.minute = lv_label_create(view, nullptr);
     lv_obj_add_style(g_data.minute, LV_OBJ_PART_MAIN, &stl_clock);
-    lv_label_set_text(g_data.minute, "00");
-    lv_obj_align(g_data.minute, view, LV_ALIGN_IN_TOP_RIGHT, -10, 0);
+    batlevel = (power->getBattVoltage()/100);
+    Serial.println("************** NIVEL DA BATERIA ************");
+    Serial.println(batlevel);
+    sprintf (bufbat, "%.0f",batlevel);
+    lv_label_set_text(g_data.minute,bufbat );
+    lv_obj_align(g_data.minute, lbl_percentsignal, LV_ALIGN_IN_TOP_LEFT, -33, 0);
 
     // CLOCK HOURS
-    g_data.hour = lv_label_create(view, nullptr);
-    lv_obj_add_style(g_data.hour, LV_OBJ_PART_MAIN, &stl_clock);
-    lv_label_set_text(g_data.hour, "00");
-    lv_obj_align(g_data.hour, g_data.minute, LV_ALIGN_IN_TOP_MID, -35, 0);
+    // g_data.hour = lv_label_create(view, nullptr);
+    // lv_obj_add_style(g_data.hour, LV_OBJ_PART_MAIN, &stl_clock);
+    // lv_label_set_text(g_data.hour, "00");
+    // lv_obj_align(g_data.hour, g_data.minute, LV_ALIGN_IN_TOP_MID, -35, 0);
 
      //TOP HORIZONTAL LINE
     static lv_point_t line_points[] = { {10, 0}, {230, 0} };
@@ -491,11 +506,21 @@ void setup() {
     ttgo = TTGOClass::getWatch();
     ttgo->begin();
     ttgo->openBL();
+    BLisOn = true;
+    power = ttgo->power;
+    pinMode(AXP202_INT, INPUT_PULLUP);
+    attachInterrupt(AXP202_INT, [] {
+        irq = true;
+    }, FALLING);
+
+    //!Clear IRQ unprocessed  first
+    ttgo->power->enableIRQ(AXP202_PEK_SHORTPRESS_IRQ | AXP202_VBUS_REMOVED_IRQ | AXP202_VBUS_CONNECT_IRQ | AXP202_CHARGING_IRQ, true);
+    ttgo->power->clearIRQ();
     ttgo->motor_begin();
     ttgo->lvgl_begin();
     SetupUI();
     
-    ttgo->tft->drawString("Esperando Wifi",80,120);
+    ttgo->tft->drawString("Waiting for Wifi",80,120);
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
     
@@ -513,6 +538,13 @@ void setup() {
   
         JsonObject jsonObj = json.as<JsonObject>();
 
+        if(BLisOn){
+            
+          }
+          else{
+            ttgo->openBL();
+            BLisOn = true;
+          }
         ttgo->motor->onec();
 
 
@@ -541,6 +573,29 @@ void setup() {
 
 void loop() {
 
+    if (irq) {
+        irq = false;
+        ttgo->power->readIRQ();
+        if (ttgo->power->isPEKShortPressIRQ()) {
+
+          if(BLisOn){
+            ttgo->closeBL();
+            BLisOn = false;
+          }
+          else{
+            ttgo->openBL();
+            BLisOn = true;
+          }
+           batlevel = (power->getBattVoltage()/100);
+            Serial.println("************** NIVEL DA BATERIA ************");
+            Serial.println(batlevel);
+            sprintf (bufbat, "%.0f",batlevel);
+            lv_label_set_text(g_data.minute,bufbat );
+            
+            Serial.println("************   POWER KEY PRESSED   **************");
+        }
+        ttgo->power->clearIRQ();
+    }
     lv_task_handler();
     delay(5);
 }
