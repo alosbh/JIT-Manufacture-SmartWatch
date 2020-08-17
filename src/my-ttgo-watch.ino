@@ -533,7 +533,7 @@ void setup() {
         Serial.print(".");
     }
 
-    Serial.print("Endereço IP: ");
+    Serial.print("Endgit commit IP: ");
     Serial.println(WiFi.localIP());
 
     server.onNotFound(notFound);
