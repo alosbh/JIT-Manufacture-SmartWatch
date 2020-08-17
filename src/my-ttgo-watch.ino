@@ -533,7 +533,7 @@ void setup() {
         Serial.print(".");
     }
 
-    Serial.print("IP Address: ");
+    Serial.print("Endereço IP: ");
     Serial.println(WiFi.localIP());
 
     server.onNotFound(notFound);
