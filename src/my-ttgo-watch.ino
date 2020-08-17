@@ -464,25 +464,29 @@ char const * baixo = "BAIXO";
 //     Serial.println("COLORI DE VERDE");
 //     lv_style_set_bg_color(&stl_bg_card, LV_OBJ_PART_MAIN, lv_color_make(0xd0, 0xff, 0xbf));
 // }
-    lv_label_set_text(lbl_workstation,chamados[(posic*4)+0]);
-    lv_label_set_text(lbl_risk,chamados[(posic*4)+1]);
-    lv_label_set_text(lbl_calltime,chamados[(posic*4)+2]);
-    lv_label_set_text(lbl_description,chamados[(posic*4)+3]);
+    lv_label_set_text(lbl_workstation,chamados[(posic*5)+0]);
+    lv_label_set_text(lbl_risk,chamados[(posic*5)+1]);
+    lv_label_set_text(lbl_calltime,chamados[(posic*5)+2]);
+    lv_label_set_text(lbl_description,chamados[(posic*5)+3]);
+
+    Serial.println(chamados[(posic*5)+0]);
+    Serial.println(chamados[(posic*5)+1]);
+    Serial.println(chamados[(posic*5)+2]);
+    Serial.println(chamados[(posic*5)+3]);
+    Serial.println(chamados[(posic*5)+4]);
 
     
 
+    // Serial.println();
+    // Serial.print("Eh BAIXO: ");
+    // Serial.println(strcmp(baixo, risco_atual));
+    // Serial.print("Eh MEDIO: ");
+    // Serial.println(strcmp(medio, risco_atual));
+    // Serial.print("Eh ALTO: ");
+    // Serial.println(strcmp(alto, risco_atual));
     
-
-    Serial.println();
-    Serial.print("Eh BAIXO: ");
-    Serial.println(strcmp(baixo, risco_atual));
-    Serial.print("Eh MEDIO: ");
-    Serial.println(strcmp(medio, risco_atual));
-    Serial.print("Eh ALTO: ");
-    Serial.println(strcmp(alto, risco_atual));
-    
-    Serial.println(baixo);
-    Serial.println(risco_atual);
+    // Serial.println(baixo);
+    // Serial.println(risco_atual);
 
 
 
@@ -548,13 +552,19 @@ void setup() {
         ttgo->motor->onec();
 
 
-        strcpy(chamados[(counter*4)+0],jsonObj["workstation"]);
+        
 
-        strcpy(chamados[(counter*4)+1],jsonObj["risk"]);
+        strcpy(chamados[(counter*5)+0],jsonObj["workstation"]);
 
-        strcpy(chamados[(counter*4)+2],jsonObj["calltime"]);
+        strcpy(chamados[(counter*5)+1],jsonObj["risk"]);
 
-        strcpy(chamados[(counter*4)+3],jsonObj["description"]);
+        strcpy(chamados[(counter*5)+2],jsonObj["calltime"]);
+
+        strcpy(chamados[(counter*5)+3],jsonObj["description"]);
+        Serial.print("MINHA ID EH: ");
+        Serial.println((uint8_t)jsonObj["id"]);
+        
+        strcpy(chamados[(counter*5)+4],jsonObj["id"]);
         counter = counter +1;
         atual = counter;
         printCard(counter-1);
