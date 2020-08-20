@@ -5,10 +5,15 @@
 #include <AsyncTCP.h>
 #include "AsyncJson.h"
 #include "ArduinoJson.h"
-
+#include <HTTPClient.h>
+#include <asyncHTTPrequest.h>
 #include <ESPAsyncWebServer.h>
+#include "esp_wpa2.h"
 #include "config.h"
 
+// #define EAP_IDENTITY "100059527" 
+// #define EAP_PASSWORD "Sdesenha2016*"
+// const char* ssid = "JABOFF0003";
 
 TTGOClass *ttgo;
 PCF8563_Class *rtc;
@@ -17,6 +22,12 @@ bool irq = false;
 bool BLisOn = false;
 
 AsyncWebServer server(80);
+HTTPClient http;
+
+const char* serverName = "http://10.57.38.133:3000/reloginho";
+char ip_address[15];
+asyncHTTPrequest asyncrequest;
+
 
 LV_FONT_DECLARE(fn1_32);
 LV_FONT_DECLARE(liquidCrystal_nor_32);
@@ -33,14 +44,21 @@ static lv_obj_t * bg_card;
 static lv_obj_t * lbl_workstation;
 static lv_obj_t * lbl_risk;
 static lv_obj_t * lbl_calltime;
+static lv_obj_t * lbl_status;
 static lv_obj_t * lbl_description;
+static lv_obj_t * lbl_user;
 
+static lv_obj_t * btn1;
+static lv_obj_t * btn2;
 static lv_obj_t * lbl_actualcard;
 static lv_obj_t * lbl_totalcard;
 static lv_obj_t * lbl_count_separator;
 
 static lv_obj_t * btn_back;
 static lv_obj_t * btn_next;
+
+static lv_obj_t * lbl_IP;
+    static lv_obj_t * lbl_RSSI;
 
 // const char* ssid = "2.4G Netvirtua apto 305.";
 // const char* password = "http3333";
@@ -51,7 +69,10 @@ static lv_obj_t * btn_next;
 const char* ssid = "JAB_RASP0001";
 const char* password = "g4keKDI2RkXQT";
 
+const char* auxName = "ANDRE";
+const char* ipRelogio= "10.57.38.130";
 
+char bufrssi [4];
 char bufatual [2];
 char buftotal [2];
 char bufbat[8];
@@ -63,25 +84,6 @@ typedef struct {
     lv_obj_t *second;
 } str_datetime_t;
 
-typedef struct  {
-     const char *workstation;
-    const char *risk;
-    const char *calltime;
-    const char *description;
-}str_card_t ;
-str_card_t novocard;
-str_card_t createCard(const char *workstation, const char *risk,const char *calltime,const char *description){
-    
-    Serial.println("/////// CRIAR NOVO CARD/////");
-    str_card_t card;
-    card.workstation = workstation;
-    card.risk = risk;
-    card.calltime = calltime;
-    card.description = description;
-    return card;
-
-}
- str_card_t calls[10];
 
 char chamados[50][50];
 
@@ -219,6 +221,16 @@ void SetupUI()
     lbl_nocard = lv_label_create(view, NULL);
     lv_label_set_text(lbl_nocard, "Sem chamados.");
     lv_obj_align(lbl_nocard, view, LV_ALIGN_CENTER, 0, 0);
+
+    
+    lbl_IP = lv_label_create(view, NULL);
+    lv_label_set_text(lbl_IP, "0.0.0.0");
+    lv_obj_align(lbl_IP, view, LV_ALIGN_CENTER, 0, 20);
+
+    
+    lbl_RSSI = lv_label_create(view, NULL);
+    lv_label_set_text(lbl_RSSI, "-0");
+    lv_obj_align(lbl_RSSI, view, LV_ALIGN_CENTER, 0, 40);
     
     bg_card = lv_obj_create(view, NULL);
     lv_obj_set_pos(bg_card, 10, 40);
@@ -241,6 +253,12 @@ void SetupUI()
     lv_label_set_text(lbl_risk, "RISCO");
     lv_obj_align(lbl_risk, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 40);
 
+    
+    // CALL TIME LABEL
+    
+    lbl_status = lv_label_create(bg_card, NULL);
+    lv_label_set_text(lbl_status, "Status");
+    lv_obj_align(lbl_status, NULL, LV_ALIGN_IN_TOP_RIGHT, -40, 100);
     // CALL TIME LABEL
     
     lbl_calltime = lv_label_create(bg_card, NULL);
@@ -253,24 +271,28 @@ void SetupUI()
     lv_label_set_text(lbl_description, "DESCRIPTION");
     lv_obj_align(lbl_description, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 70);
 
+    lbl_user = lv_label_create(bg_card, NULL);
+    lv_label_set_text(lbl_user, "");
+    lv_obj_align(lbl_user, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 100);
+
 
     // BUTTON 1
-    lv_obj_t * btn1 = lv_btn_create(bg_card, NULL);
+    btn1 = lv_btn_create(bg_card, NULL);
     lv_obj_set_pos(btn1, 10, 125);
     lv_obj_set_width(btn1,95);
     lv_obj_set_height(btn1,35);
-    lv_obj_set_event_cb(btn1, btn1_handler);
+    lv_obj_set_event_cb(btn1, sendRequest);
     
     // BUTTON 1 LABEL
     lv_obj_t * lbl_btn1;
     lbl_btn1 = lv_label_create(btn1, NULL);
-    lv_label_set_text(lbl_btn1, "Finalizar");
+    lv_label_set_text(lbl_btn1, "Confirmar");
     lv_label_set_text(lbl_btn1, LV_SYMBOL_OK);
     lv_obj_add_style(btn1, LV_OBJ_PART_MAIN, &stl_btn1);
 
 
     // BUTTON 2
-    lv_obj_t * btn2 = lv_btn_create(bg_card, NULL);
+    btn2 = lv_btn_create(bg_card, NULL);
     lv_obj_set_pos(btn2, 120, 125);
     lv_obj_set_width(btn2,95);
     lv_obj_set_height(btn2,35);
@@ -307,6 +329,7 @@ void SetupUI()
     lv_obj_t * lbl_btn_back;
     lbl_btn_back = lv_label_create(btn_back, NULL);
     lv_label_set_text(lbl_btn_back, LV_SYMBOL_LEFT);
+    // lv_obj_set_event_cb(btn_back, btn1_handler);
     lv_obj_set_event_cb(btn_back, btn1_handler);
 
     btn_next= lv_btn_create(view, NULL);
@@ -320,60 +343,17 @@ void SetupUI()
     lv_obj_set_event_cb(btn_next, btn2_handler);
     
     lv_obj_set_hidden(bg_card, true);
-    // lv_obj_set_hidden(lbl_count_separator, true);
-    // lv_obj_set_hidden(lbl_actualcard, true);
-    // lv_obj_set_hidden(lbl_totalcard, true);
-    // lv_obj_set_hidden(btn_back, true);
-    // lv_obj_set_hidden(btn_next, true);
-    
-
-    // lv_task_create([](lv_task_t *t) {
-
-    //     RTC_Date curr_datetime = rtc->getDateTime();
-        
-    //     lv_label_set_text_fmt(g_data.minute, "%02u", curr_datetime.minute);
-    //     lv_label_set_text_fmt(g_data.hour, "%02u", curr_datetime.hour);
-
-    // }, 1000, LV_TASK_PRIO_MID, nullptr);
-
-    
-    // setCpuFrequencyMhz(20);
 
     
 }
 static void toggle_Cards_On(){
 
-
-        
-   
-        Serial.println("Habilitando:");
-        
         lv_obj_set_hidden(bg_card, false);
-        // lv_obj_set_hidden(lbl_count_separator, false);
-        // lv_obj_set_hidden(lbl_actualcard, false);
-        // lv_obj_set_hidden(lbl_totalcard, false);
-        // lv_obj_set_hidden(btn_back, false);
-        // lv_obj_set_hidden(btn_next, false);
-        
-
-
 }
 static void toggle_Cards_Off(){
 
-
-        Serial.println("Apagando:");
-        lv_obj_set_hidden(bg_card, true);
-        // lv_obj_set_hidden(lbl_count_separator, true);
-        // lv_obj_set_hidden(lbl_actualcard, true);
-        // lv_obj_set_hidden(lbl_totalcard, true);
-        // lv_obj_set_hidden(btn_back, true);
-        // lv_obj_set_hidden(btn_next, true);
-   
-       
-
-
+        lv_obj_set_hidden(bg_card, true); 
 }
-
 
 static void btn1_handler(lv_obj_t *obj, lv_event_t event)
 {
@@ -409,6 +389,54 @@ static void btn2_handler(lv_obj_t *obj, lv_event_t event)
     
 }
 
+void sendRequest(lv_obj_t *obj, lv_event_t event){
+
+  if (event == LV_EVENT_CLICKED) {
+
+    
+    Serial.println(chamados[((atual-1)*6)+0]);
+    Serial.println(chamados[((atual-1)*6)+1]);
+    Serial.println(chamados[((atual-1)*6)+2]);
+    Serial.println(chamados[((atual-1)*6)+3]);
+    Serial.println(chamados[((atual-1)*6)+4]);
+    Serial.println(chamados[((atual-1)*6)+5]);
+    
+    
+    StaticJsonDocument<200> doc2;
+
+      doc2["id"] = chamados[((atual-1)*6)+4];
+      doc2["userName"] = auxName;
+      doc2["ip"] = ipRelogio;
+      // doc["action"] = "Confirmar";
+      // doc["action"] = "Cancelar";
+      String requestBody;
+      serializeJson(doc2, requestBody);
+    if(asyncrequest.readyState() == 0 || asyncrequest.readyState() == 4){
+        // asyncrequest.open("GET", "http://brbelm0itqa01/AioWatch/GetById?id=4");
+        // asyncrequest.open("POST", "http://brbelm0itqa01/AioWatch/Start");
+        asyncrequest.open("POST", "http://10.57.38.133:3000/reloginho");
+        // asyncrequest.open("GET", "http://192.168.56.1:3000/reloginho");
+        asyncrequest.setReqHeader("Content-Type", "application/json");
+        
+        asyncrequest.send(requestBody);
+    }
+  }
+}
+
+void requestCB(void* optParm, asyncHTTPrequest* asyncrequest, int readyState){
+    if(readyState == 4){
+        Serial.println("***********REQUEST CB ***********");
+        Serial.println(asyncrequest->responseHTTPcode());
+        Serial.println(asyncrequest->responseText());
+        if(asyncrequest->responseHTTPcode()==200){
+          Serial.println("Esse chamado deu certo sim");
+        }
+        
+        Serial.println();
+        // asyncrequest->setDebug(false);
+    }
+}
+
 static void removefromArray(lv_obj_t *obj, lv_event_t event){
 
   if (event == LV_EVENT_CLICKED) {
@@ -420,10 +448,13 @@ static void removefromArray(lv_obj_t *obj, lv_event_t event){
 
     for(i=pos; i<tam; i++)
           {
-              strcpy(chamados[(i*4)+0],chamados[(i*4)+4]);
-              strcpy(chamados[(i*4)+1],chamados[(i*4)+5]);
-              strcpy(chamados[(i*4)+2],chamados[(i*4)+6]);
-              strcpy(chamados[(i*4)+3],chamados[(i*4)+7]);
+              strcpy(chamados[(i*7)+0],chamados[(i*7)+7]);
+              strcpy(chamados[(i*7)+1],chamados[(i*7)+8]);
+              strcpy(chamados[(i*7)+2],chamados[(i*7)+9]);
+              strcpy(chamados[(i*7)+3],chamados[(i*7)+10]);
+              strcpy(chamados[(i*7)+4],chamados[(i*7)+11]);
+              strcpy(chamados[(i*7)+5],chamados[(i*7)+12]);
+              strcpy(chamados[(i*7)+6],chamados[(i*7)+13]);
           };
 
 
@@ -446,11 +477,11 @@ static void removefromArray(lv_obj_t *obj, lv_event_t event){
 
 void printCard(uint8_t posic){
 
-char const * baixo = "BAIXO";
-    char const * medio = "MEDIO";
-    char const * alto = "ALTO";
+// char const * baixo = "BAIXO";
+//     char const * medio = "MEDIO";
+//     char const * alto = "ALTO";
 
-    char * risco_atual = lv_label_get_text(lbl_risk);
+//     char * risco_atual = lv_label_get_text(lbl_risk);
 
 // if(strcmp(medio, risco_atual)==0){
 //     Serial.println("COLORI DE AMARELO");
@@ -463,30 +494,41 @@ char const * baixo = "BAIXO";
 // else if(strcmp(baixo, risco_atual)==0){
 //     Serial.println("COLORI DE VERDE");
 //     lv_style_set_bg_color(&stl_bg_card, LV_OBJ_PART_MAIN, lv_color_make(0xd0, 0xff, 0xbf));
+
 // }
-    lv_label_set_text(lbl_workstation,chamados[(posic*5)+0]);
-    lv_label_set_text(lbl_risk,chamados[(posic*5)+1]);
-    lv_label_set_text(lbl_calltime,chamados[(posic*5)+2]);
-    lv_label_set_text(lbl_description,chamados[(posic*5)+3]);
 
-    Serial.println(chamados[(posic*5)+0]);
-    Serial.println(chamados[(posic*5)+1]);
-    Serial.println(chamados[(posic*5)+2]);
-    Serial.println(chamados[(posic*5)+3]);
-    Serial.println(chamados[(posic*5)+4]);
+    lv_obj_set_hidden(bg_card, true); 
 
+    if(strcmp(chamados[(posic*7)+5],"Open")==0){
+      Serial.println("mostrei o botao");
+      lv_obj_set_hidden(btn1, false); 
+      
+    }
+    else{
+      Serial.println("escondi o botao");
+      lv_obj_set_hidden(btn1, true);
+      
+    }
+    lv_obj_set_hidden(bg_card, false); 
+    lv_label_set_text(lbl_workstation,chamados[(posic*7)+0]);
+    lv_label_set_text(lbl_risk,chamados[(posic*7)+1]);
+    lv_label_set_text(lbl_calltime,chamados[(posic*7)+2]);
+    lv_label_set_text(lbl_description,chamados[(posic*7)+3]);
+    lv_label_set_text(lbl_status,chamados[(posic*7)+5]);
+    lv_label_set_text(lbl_user,chamados[(posic*7)+6]);
+
+    Serial.println("********8 MEU CARD *******");
+
+    Serial.println(chamados[(posic*7)+0]);
+    Serial.println(chamados[(posic*7)+1]);
+    Serial.println(chamados[(posic*7)+2]);
+    Serial.println(chamados[(posic*7)+3]);
+    Serial.println(chamados[(posic*7)+4]);
+    Serial.println(chamados[(posic*7)+5]);
+    Serial.println(chamados[(posic*7)+6]);
     
 
-    // Serial.println();
-    // Serial.print("Eh BAIXO: ");
-    // Serial.println(strcmp(baixo, risco_atual));
-    // Serial.print("Eh MEDIO: ");
-    // Serial.println(strcmp(medio, risco_atual));
-    // Serial.print("Eh ALTO: ");
-    // Serial.println(strcmp(alto, risco_atual));
-    
-    // Serial.println(baixo);
-    // Serial.println(risco_atual);
+
 
 
 
@@ -501,6 +543,24 @@ Serial.println();
   lv_label_set_text(lbl_totalcard,buftotal);
 
   
+}
+
+
+String urlencode(const String &s) {
+  static const char lookup[]= "0123456789abcdef";
+  String result;
+  size_t len = s.length();
+
+  for(size_t i = 0; i < len; i++) {
+    const char c = s[i];
+    if(('0' <= c && c <= '9') || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || (c=='-' || c=='_' || c=='.' || c=='~')) {
+      result += c;
+    } else {
+      result += "%" + String(lookup[(c & 0xf0) >>4]) + String(lookup[c & 0x0f]);
+    }
+  }
+
+  return result;
 }
 
 void setup() {
@@ -525,20 +585,141 @@ void setup() {
     SetupUI();
     
     ttgo->tft->drawString("Waiting for Wifi",80,120);
-    WiFi.mode(WIFI_STA);
+
+
     WiFi.begin(ssid, password);
+
+
     
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
-        Serial.print(".");
+        Serial.print(WiFi.status());
     }
+    
+    String meuip = WiFi.localIP().toString();
+    meuip.toCharArray(ip_address,15);
+    lv_label_set_text(lbl_IP,ip_address);
+    
+    
+    long rssi = WiFi.RSSI();
+    if(rssi <= -85 ){
+        Serial.print("rssi maior q 85 ");
+        lv_label_set_text(lbl_RSSI,"85+");
+        
+      }
+    if(rssi >-85 && rssi <= -80 ){
+        Serial.print("rssi entre 85 e 80 ");
+        lv_label_set_text(lbl_RSSI,"85~80");
+        
+      }
+    if(rssi >-80 && rssi <= -75 ){
+        Serial.print("rssi entre 80 e 75 ");
+        lv_label_set_text(lbl_RSSI,"80~75");
+        
+      }
+    if(rssi >-75 && rssi <= -70 ){
+        Serial.print("rssi entre 75 e 70 ");
+        lv_label_set_text(lbl_RSSI,"75~70");
+        
+      }
+    if(rssi >-70 && rssi <= -65 ){
+        Serial.print("rssi entre 70 e 65 ");
+        lv_label_set_text(lbl_RSSI,"70~65");
+        
+      }
+    if(rssi >-65 && rssi <= -60 ){
+        Serial.print("rssi entre 65 e 60 ");
+        lv_label_set_text(lbl_RSSI,"65~60");
+        
+      }
+      if(rssi >-60 && rssi <= -55 ){
+        Serial.print("rssi entre 60 e 55 ");
+        
+      }
+      if(rssi >-55 && rssi <= -50 ){
+        Serial.print("rssi entre 55 e 50 ");
+        lv_label_set_text(lbl_RSSI,"55~50");
+        
+      }
+      if(rssi >-50 && rssi <= -45 ){
+        Serial.print("rssi entre 50 e 45 ");
+        lv_label_set_text(lbl_RSSI,"50~45");
+        
+      }
+      if(rssi >-45 && rssi <= -40 ){
+        Serial.print("rssi entre 45 e 40 ");
+        lv_label_set_text(lbl_RSSI,"45~40");
+        
+      }
+      if(rssi >-40 && rssi <= -35 ){
+        Serial.print("rssi entre 40 e 35 ");
+        lv_label_set_text(lbl_RSSI,"40~35");
+        
+      }
+      if(rssi > -35 ){
+        Serial.print("rssi menor que 35 ");
+        lv_label_set_text(lbl_RSSI,"35-");
+        
+      }
+    
+    
+// char * mystr;
 
-    Serial.print("Endgit commit IP: ");
+//   Serial.println(rssi);
+//   sprintf(mystr,"Millis: %lu",rssi);
+//   Serial.println(mystr);
+  
+
+    Serial.print("Wifi IP: ");
     Serial.println(WiFi.localIP());
+  
+
+  Serial.print("RSSI:");
+Serial.println(rssi);
+
+    asyncrequest.setDebug(true);
+    asyncrequest.onReadyStateChange(requestCB);
 
     server.onNotFound(notFound);
 
-    AsyncCallbackJsonWebHandler* handler = new AsyncCallbackJsonWebHandler("/rest/endpoint", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+        request->send(200, "text/plain", "Andre Lara hehehe 8)");
+    });
+
+    AsyncCallbackJsonWebHandler* handler = new AsyncCallbackJsonWebHandler("/receberchamado", [](AsyncWebServerRequest *request, JsonVariant &json) {
+  
+        JsonObject jsonObj = json.as<JsonObject>();
+
+        if(BLisOn){
+            
+          }
+          else{
+            ttgo->openBL();
+            BLisOn = true;
+          }
+        ttgo->motor->onec();
+        strcpy(chamados[(counter*7)+0],jsonObj["workstation"]);
+
+        strcpy(chamados[(counter*7)+1],jsonObj["risk"]);
+
+        strcpy(chamados[(counter*7)+2],jsonObj["calltime"]);
+
+        strcpy(chamados[(counter*7)+3],jsonObj["description"]);
+       
+        strcpy(chamados[(counter*7)+4],jsonObj["id"]);
+        strcpy(chamados[(counter*7)+5],"Open");
+        strcpy(chamados[(counter*7)+6],"");
+        counter = counter +1;
+        atual = counter;
+        printCard(counter-1);
+        
+        toggle_Cards_On();
+        
+        request->send(200);
+
+    });
+
+    AsyncCallbackJsonWebHandler* handler2 = new AsyncCallbackJsonWebHandler("/atualizarchamado", [](AsyncWebServerRequest *request, JsonVariant &json) {
   
         JsonObject jsonObj = json.as<JsonObject>();
 
@@ -551,33 +732,64 @@ void setup() {
           }
         ttgo->motor->onec();
 
-
+        char idbuscado [3];
+         char userbuscado [20];
+         char statusbuscado [20];
+         Serial.println("ID RECEBIDA");
+        strcpy(idbuscado,jsonObj["id"]);
+        Serial.println("USUARIO RECEBIDO");
+        strcpy(userbuscado,jsonObj["userName"]);
+        Serial.println("STATUS RECEBIDO");
+        strcpy(statusbuscado,jsonObj["status"]);
         
 
-        strcpy(chamados[(counter*5)+0],jsonObj["workstation"]);
-
-        strcpy(chamados[(counter*5)+1],jsonObj["risk"]);
-
-        strcpy(chamados[(counter*5)+2],jsonObj["calltime"]);
-
-        strcpy(chamados[(counter*5)+3],jsonObj["description"]);
-        Serial.print("MINHA ID EH: ");
-        Serial.println((uint8_t)jsonObj["id"]);
         
-        strcpy(chamados[(counter*5)+4],jsonObj["id"]);
-        counter = counter +1;
-        atual = counter;
-        printCard(counter-1);
-        
-        toggle_Cards_On();
+        for (int i = 4; i <= ((counter*7)-3); i=i+7) {
+          Serial.print("Comparei ");
+          Serial.print(chamados[i]);
+          Serial.print(" com ");
+          Serial.print(idbuscado);
+          Serial.println("Boolean:");
+          Serial.println(idbuscado==chamados[i]);
+
+          Serial.println("****ITERANDO***");
+          if(strcmp(chamados[i], idbuscado)==0){
+
+            
+            Serial.println("Achei meu chamado buscado");
+            strcpy(chamados[i+1],statusbuscado);
+            strcpy(chamados[i+2],userbuscado);
+            
+            Serial.println(chamados[i-4]);
+            Serial.println(chamados[i-3]);
+            Serial.println(chamados[i-2]);
+            Serial.println(chamados[i-1]);
+            Serial.println(chamados[i]);
+            Serial.println(chamados[i+1]);
+            Serial.println(chamados[i+2]);
+            atual=((i-4)/7)+1;
+            printCard(atual-1);
+            break;
+
+          }
+    
+    
+        }
+
         
         request->send(200);
 
     });
 
+
     server.addHandler(handler);
+    server.addHandler(handler2);
+    
 
     server.begin();
+    
+    
+    
   
 }
 
@@ -596,16 +808,11 @@ void loop() {
             ttgo->openBL();
             BLisOn = true;
           }
-           batlevel = (power->getBattVoltage()/100);
-            Serial.println("************** NIVEL DA BATERIA ************");
-            Serial.println(batlevel);
-            sprintf (bufbat, "%.0f",batlevel);
-            lv_label_set_text(g_data.minute,bufbat );
-            
-            Serial.println("************   POWER KEY PRESSED   **************");
+
         }
         ttgo->power->clearIRQ();
     }
+ 
     lv_task_handler();
     delay(5);
 }
