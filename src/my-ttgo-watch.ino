@@ -69,8 +69,12 @@ static lv_obj_t * lbl_IP;
 const char* ssid = "JAB_RASP0001";
 const char* password = "g4keKDI2RkXQT";
 
-const char* auxName = "ANDRE";
-const char* ipRelogio= "10.57.38.130";
+// const char* auxName = "ANDRE";
+// const char* ipRelogio= "http://10.57.38.132";
+
+
+const char* auxName = "LUCAS";
+const char* ipRelogio= "http://10.57.39.51";
 
 char bufrssi [4];
 char bufatual [2];
@@ -394,28 +398,27 @@ void sendRequest(lv_obj_t *obj, lv_event_t event){
   if (event == LV_EVENT_CLICKED) {
 
     
-    Serial.println(chamados[((atual-1)*6)+0]);
-    Serial.println(chamados[((atual-1)*6)+1]);
-    Serial.println(chamados[((atual-1)*6)+2]);
-    Serial.println(chamados[((atual-1)*6)+3]);
-    Serial.println(chamados[((atual-1)*6)+4]);
-    Serial.println(chamados[((atual-1)*6)+5]);
+    Serial.println(chamados[((atual-1)*7)+0]);
+    Serial.println(chamados[((atual-1)*7)+1]);
+    Serial.println(chamados[((atual-1)*7)+2]);
+    Serial.println(chamados[((atual-1)*7)+3]);
+    Serial.println(chamados[((atual-1)*7)+4]);
+    Serial.println(chamados[((atual-1)*7)+5]);
     
     
     StaticJsonDocument<200> doc2;
 
-      doc2["id"] = chamados[((atual-1)*6)+4];
-      doc2["userName"] = auxName;
-      doc2["ip"] = ipRelogio;
-      // doc["action"] = "Confirmar";
-      // doc["action"] = "Cancelar";
+      doc2["Id"] = chamados[((atual-1)*7)+4];
+      doc2["UserName"] = auxName;
+      doc2["Ip"] = ipRelogio;
+      
       String requestBody;
       serializeJson(doc2, requestBody);
     if(asyncrequest.readyState() == 0 || asyncrequest.readyState() == 4){
-        // asyncrequest.open("GET", "http://brbelm0itqa01/AioWatch/GetById?id=4");
-        // asyncrequest.open("POST", "http://brbelm0itqa01/AioWatch/Start");
-        asyncrequest.open("POST", "http://10.57.38.133:3000/reloginho");
-        // asyncrequest.open("GET", "http://192.168.56.1:3000/reloginho");
+   
+        asyncrequest.open("POST", "http://10.57.16.40/AioWatch/Confirm");
+        // asyncrequest.open("POST", "http://10.57.38.133:3000/reloginho");
+  
         asyncrequest.setReqHeader("Content-Type", "application/json");
         
         asyncrequest.send(requestBody);
@@ -691,7 +694,7 @@ Serial.println(rssi);
         JsonObject jsonObj = json.as<JsonObject>();
 
         if(BLisOn){
-            
+          
           }
           else{
             ttgo->openBL();
@@ -736,11 +739,11 @@ Serial.println(rssi);
          char userbuscado [20];
          char statusbuscado [20];
          Serial.println("ID RECEBIDA");
-        strcpy(idbuscado,jsonObj["id"]);
+        strcpy(idbuscado,jsonObj["Id"]);
         Serial.println("USUARIO RECEBIDO");
-        strcpy(userbuscado,jsonObj["userName"]);
+        strcpy(userbuscado,jsonObj["UserName"]);
         Serial.println("STATUS RECEBIDO");
-        strcpy(statusbuscado,jsonObj["status"]);
+        strcpy(statusbuscado,jsonObj["Status"]);
         
 
         
