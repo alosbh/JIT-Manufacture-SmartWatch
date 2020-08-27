@@ -107,6 +107,9 @@ void wifictl_setup( void ) {
         }
     }, WiFiEvent_t::SYSTEM_EVENT_SCAN_DONE );
 
+   
+
+    
     WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
         wifictl_set_event( WIFICTL_CONNECT | WIFICTL_ACTIVE );
         if ( wifictl_get_event( WIFICTL_WPS_REQUEST ) ) {
@@ -165,6 +168,8 @@ void wifictl_setup( void ) {
                   1,                      /* Priority of the task */
                   &_wifictl_Task );       /* Task handle. */
     vTaskSuspend( _wifictl_Task );
+
+    // wifictl_insert_network( "2.4G Netvirtua apto 305.", "http3333" );
 }
 
 

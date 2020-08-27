@@ -59,7 +59,7 @@ void example_app_setup( void ) {
     example_app_setup_tile_num = example_app_main_tile_num + 1;
 
     // create an app icon, label it and get the lv_obj_t icon container
-    example_app_icon_cont = app_tile_register_app( "myapp");
+    example_app_icon_cont = app_tile_register_app( "testezin");
     // set your own icon and register her callback to activate by an click
     // remember, an app icon must have an size of 64x64 pixel with an alpha channel
     // use https://lvgl.io/tools/imageconverter to convert your images and set "true color with alpha" to get fancy images

@@ -77,7 +77,7 @@ void stopwatch_app_setup( void ) {
     stopwatch_app_icon_info = lv_img_create( stopwatch_app_icon_cont, NULL );
     lv_img_set_src( stopwatch_app_icon_info, &info_1_16px );
     lv_obj_align( stopwatch_app_icon_info, stopwatch_app_icon_cont, LV_ALIGN_IN_TOP_RIGHT, 0, 0 );
-    lv_obj_set_hidden( stopwatch_app_icon_info, true );
+    lv_obj_set_hidden( stopwatch_app_icon_info, false );
 
     // init main and setup tile, see stopwatch_app_main.cpp and stopwatch_app_setup.cpp
     stopwatch_app_main_setup( stopwatch_app_main_tile_num );

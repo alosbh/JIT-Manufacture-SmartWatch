@@ -28,10 +28,14 @@
 #include <ESPAsyncWebServer.h>
 #include <SPIFFSEditor.h>
 #include <ESP32SSDP.h>
+#include "AsyncJson.h"
+#include "ArduinoJson.h"
 
 #include "webserver.h"
 #include "config.h"
 #include "gui/screenshot.h"
+
+#include "app/jitsupport/jitsupport_app_main.h"
 
 AsyncWebServer asyncserver( WEBSERVERPORT );
 TaskHandle_t _WEBSERVER_Task;
@@ -321,6 +325,20 @@ void asyncwebserver_start(void){
     [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUpdate(request, filename, index, data, len, final); }
   );
 
+  AsyncCallbackJsonWebHandler* handler = new AsyncCallbackJsonWebHandler("/receberchamado", [](AsyncWebServerRequest *request, JsonVariant &json) {
+  
+
+        JsonObject jsonObj = json.as<JsonObject>();
+
+       
+        newticket(jsonObj);
+        
+        request->send(200);
+
+    });
+  asyncserver.addHandler(handler);
+
+  
   asyncserver.on("/description.xml", HTTP_GET, [](AsyncWebServerRequest *request) {
     byte mac[6];
     WiFi.macAddress(mac);

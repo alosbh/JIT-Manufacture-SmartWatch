@@ -47,6 +47,7 @@
 
 LV_IMG_DECLARE(bg2)
 
+
 /**
  * Create a demo application
  */
@@ -64,7 +65,7 @@ void gui_setup(void)
 
     mainbar_setup();
     /* add the four mainbar screens */
-    main_tile_setup();
+    main_tile_setup(); // HORARIO E DATA
     app_tile_setup();
     note_tile_setup();
     setup_tile_setup();
