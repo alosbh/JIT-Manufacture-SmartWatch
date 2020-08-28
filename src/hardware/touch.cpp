@@ -56,32 +56,45 @@ static bool touch_getXY( int16_t &x, int16_t &y ) {
     }
 
     p = ttgo->touch->getPoint();
+    p.x=(p.x-4)*240/(320-4);
+    p.y=(p.y-20)*240/(320-20);
 
     uint8_t rotation = ttgo->tft->getRotation();
     switch ( rotation ) {
-    case 0:
+    // case 0:
+    case 2:
         x = TFT_WIDTH - p.x;
         y = TFT_HEIGHT - p.y;
         break;
-    case 1:
+    // case 1:
+    case 3:
         x = TFT_WIDTH - p.y;
         y = p.x;
         break;
-    case 3:
+    // case 3:
+    case 1:
         x = p.y;
         y = TFT_HEIGHT - p.x;
         break;
-    case 2:
+    // case 2:
+    case 0:
     default:
         x = p.x;
         y = p.y;
     }
 
     // issue https://github.com/sharandac/My-TTGO-Watch/issues/18 fix
-    float temp_x = ( x - ( LV_HOR_RES_MAX / 2 ) ) * 1.15;
-    float temp_y = ( y - ( LV_VER_RES_MAX / 2 ) ) * 1.0;
-    x = temp_x + ( LV_HOR_RES_MAX / 2 );
-    y = temp_y + ( LV_VER_RES_MAX / 2 );
+    // float temp_x = ( x - ( LV_HOR_RES_MAX / 2 ) ) * 1.15;
+    // float temp_y = ( y - ( LV_VER_RES_MAX / 2 ) ) * 1.0;
+    // x = temp_x + ( LV_HOR_RES_MAX / 2 );
+    // y = temp_y + ( LV_VER_RES_MAX / 2 );
+
+   float temp_x = ( x - ( LV_HOR_RES_MAX / 2 ) ) * 1.0;
+   float temp_y = ( y - ( LV_VER_RES_MAX / 2 ) ) * 1.0;
+   x = temp_x + ( LV_HOR_RES_MAX / 2 );
+   y = temp_y + ( LV_VER_RES_MAX / 2 );
+
+   log_i("touch x:%d, y:%d",x,y);
 
     return( true );
 }
