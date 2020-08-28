@@ -60,14 +60,14 @@ static lv_obj_t * btn_next;
 static lv_obj_t * lbl_IP;
 static lv_obj_t * lbl_RSSI;
 
-const char* ssid = "2.4G Netvirtua apto 305.";
-const char* password = "http3333";
+// const char* ssid = "2.4G Netvirtua apto 305.";
+// const char* password = "http3333";
 
 // const char* ssid = "Moto G Play 7041";
 // const char* password = "isabela1";
 
-// const char* ssid = "JAB_RASP0001";
-// const char* password = "g4keKDI2RkXQT";
+const char* ssid = "JAB_RASP0001";
+const char* password = "g4keKDI2RkXQT";
 
 // const char* auxName = "ANDRE";
 // const char* ipRelogio= "http://10.57.38.132";
@@ -665,7 +665,6 @@ Serial.println(rssi);
     asyncrequest.onReadyStateChange(requestCB);
 
     server.onNotFound(notFound);
-
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
         request->send(200, "text/plain", "Andre Lara hehehe 8)");
     });
