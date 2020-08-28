@@ -21,7 +21,7 @@
  */
 #include "config.h"
 #include "display_settings.h"
-
+#include <TTGO.h>
 #include "gui/mainbar/mainbar.h"
 #include "gui/mainbar/setup_tile/setup.h"
 #include "gui/statusbar.h"
@@ -33,7 +33,7 @@ lv_obj_t *display_settings_tile_2 = NULL;
 lv_style_t display_settings_style;
 uint32_t display_tile_num_1;
 uint32_t display_tile_num_2;
-
+TTGOClass *ttwatch = TTGOClass::getWatch();
 lv_obj_t *display_setup_icon_cont = NULL;
 lv_obj_t *display_setup_info_img = NULL;
 
@@ -284,7 +284,9 @@ static void display_block_return_maintile_setup_event_cb( lv_obj_t * obj, lv_eve
 
 static void display_brightness_setup_event_cb( lv_obj_t * obj, lv_event_t event ) {
     switch( event ) {
-        case( LV_EVENT_VALUE_CHANGED ):     display_set_brightness( lv_slider_get_value( obj ) );
+        case( LV_EVENT_VALUE_CHANGED ):    ttwatch->bl->adjust( lv_slider_get_value( obj ) );
+                                            display_set_brightness( lv_slider_get_value( obj )  );
+                                            Serial.println("TROQUEI O BRILHO");
                                             break;
     }
 }

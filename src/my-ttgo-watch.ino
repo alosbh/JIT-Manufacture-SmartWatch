@@ -95,8 +95,10 @@ void setup()
     if (wifictl_get_autoon() && (ttgo->power->isChargeing() || ttgo->power->isVBUSPlug() || (ttgo->power->getBattVoltage() > 3400)))
         wifictl_on();
 
+    wifictl_on();
     splash_screen_stage_finish( ttgo );
-    display_set_brightness( display_get_brightness() );
+    // display_set_brightness( display_get_brightness() );
+    display_set_brightness( 255 );
 
     // enable to store data in normal heap
     heap_caps_malloc_extmem_enable( 16*1024 );

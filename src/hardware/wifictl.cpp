@@ -118,9 +118,12 @@ void wifictl_setup( void ) {
           wifictl_save_config();
         }
         wifictl_clear_event( WIFICTL_OFF_REQUEST | WIFICTL_ON_REQUEST | WIFICTL_SCAN | WIFICTL_WPS_REQUEST  );
-        String label( wifiname );
+        String label( wifiname ); 
         label.concat(' ');
         label.concat( WiFi.localIP().toString() );
+        
+        
+        
         wifictl_send_event_cb( WIFICTL_CONNECT, (char *)label.c_str() );
         if ( wifictl_config.webserver ) {
           asyncwebserver_start();
