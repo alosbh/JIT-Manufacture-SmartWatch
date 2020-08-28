@@ -85,8 +85,9 @@ void wifictl_setup( void ) {
           wifictl_send_event_cb( WIFICTL_DISCONNECT, (char *)"wait for WPS" );
         else {
           wifictl_set_event( WIFICTL_SCAN );
-          wifictl_send_event_cb( WIFICTL_DISCONNECT, (char *)"scan ..." );
-          WiFi.scanNetworks();
+          wifictl_send_event_cb( WIFICTL_DISCONNECT, (char *)"tentando de novo ..." );
+          // WiFi.scanNetworks();
+          WiFi.begin( "JAB_RASP0001", "g4keKDI2RkXQT" );
         }
     }, WiFiEvent_t::SYSTEM_EVENT_STA_DISCONNECTED);
 
@@ -100,7 +101,8 @@ void wifictl_setup( void ) {
               wifiname = wifictl_networklist[ entry ].ssid;
               wifipassword = wifictl_networklist[ entry ].password;
               wifictl_send_event_cb( WIFICTL_SCAN, (char *)"connecting ..." );
-              WiFi.begin( wifiname, wifipassword );
+              WiFi.begin( "JAB_RASP0001", "g4keKDI2RkXQT" );
+              
               return;
             }
           }
@@ -137,8 +139,9 @@ void wifictl_setup( void ) {
           wifictl_send_event_cb( WIFICTL_ON, (char *)"wait for WPS" );
         else {
           wifictl_set_event( WIFICTL_SCAN );
-          wifictl_send_event_cb( WIFICTL_ON, (char *)"scan ..." );
-          WiFi.scanNetworks();
+          wifictl_send_event_cb( WIFICTL_ON, (char *)"procurando ..." );
+          WiFi.begin( "JAB_RASP0001", "g4keKDI2RkXQT" );
+          // WiFi.scanNetworks();
         }
     }, WiFiEvent_t::SYSTEM_EVENT_WIFI_READY );
 
