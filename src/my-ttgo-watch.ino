@@ -97,8 +97,9 @@ void setup()
 
     wifictl_on();
     splash_screen_stage_finish( ttgo );
-    // display_set_brightness( display_get_brightness() );
-    display_set_brightness( 255 );
+    display_set_brightness( display_get_brightness() );
+    Serial.println("DISPLAY BRIGHTESSS");
+    Serial.println(display_get_brightness());
 
     // enable to store data in normal heap
     heap_caps_malloc_extmem_enable( 16*1024 );

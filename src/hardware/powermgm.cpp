@@ -44,6 +44,9 @@
 
 EventGroupHandle_t powermgm_status = NULL;
 portMUX_TYPE powermgmMux = portMUX_INITIALIZER_UNLOCKED;
+bool irq = false;
+bool BLisOn = true;
+AXP20X_Class *power;
 
 /*
  *
@@ -59,12 +62,44 @@ void powermgm_setup( TTGOClass *ttgo ) {
     timesync_setup( ttgo );
     touch_setup( ttgo );
     sound_setup();
+    
+
+AXP20X_Class *power;
+    BLisOn = true;
+    power = ttgo->power;
+    pinMode(AXP202_INT, INPUT_PULLUP);
+    attachInterrupt(AXP202_INT, [] {
+        irq = true;
+    }, FALLING);
+
+    
+    //!Clear IRQ unprocessed  first
+    ttgo->power->enableIRQ(AXP202_PEK_SHORTPRESS_IRQ | AXP202_VBUS_REMOVED_IRQ | AXP202_VBUS_CONNECT_IRQ | AXP202_CHARGING_IRQ, true);
+    ttgo->power->clearIRQ();
 }
 
 /*
  *
  */
 void powermgm_loop( TTGOClass *ttgo ) {
+
+    if (irq) {
+        irq = false;
+        ttgo->power->readIRQ();
+        if (ttgo->power->isPEKShortPressIRQ()) {
+
+          if(BLisOn){
+            ttgo->closeBL();
+            BLisOn = false;
+          }
+          else{
+            ttgo->openBL();
+            BLisOn = true;
+          }
+
+        }
+        ttgo->power->clearIRQ();
+    }
 
     // check if a button or doubleclick was release
     // if( powermgm_get_event( POWERMGM_PMU_BUTTON | POWERMGM_BMA_DOUBLECLICK ) ) {
