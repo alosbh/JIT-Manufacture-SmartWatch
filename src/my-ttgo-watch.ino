@@ -668,7 +668,6 @@ Serial.println(rssi);
     asyncrequest.onReadyStateChange(requestCB);
 
     server.onNotFound(notFound);
-
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
         request->send(200, "text/plain", "Andre Lara hehehe 8)");
     });
