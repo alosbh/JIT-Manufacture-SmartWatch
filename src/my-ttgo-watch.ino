@@ -69,6 +69,7 @@ static lv_obj_t * lbl_RSSI;
 const char* ssid = "JAB_RASP0001";
 const char* password = "g4keKDI2RkXQT";
 
+uint8_t num_tickets = 10;
 // const char* auxName = "ANDRE";
 // const char* ipRelogio= "http://10.57.38.132";
 
@@ -92,7 +93,7 @@ typedef struct {
 } str_datetime_t;
 
 
-char chamados[50][50];
+char chamados[100][100];
 
 
 uint8_t counter = 0;
@@ -401,17 +402,17 @@ void sendRequest(lv_obj_t *obj, lv_event_t event){
   if (event == LV_EVENT_CLICKED) {
 
     
-    Serial.println(chamados[((atual-1)*7)+0]);
-    Serial.println(chamados[((atual-1)*7)+1]);
-    Serial.println(chamados[((atual-1)*7)+2]);
-    Serial.println(chamados[((atual-1)*7)+3]);
-    Serial.println(chamados[((atual-1)*7)+4]);
-    Serial.println(chamados[((atual-1)*7)+5]);
+    Serial.println(chamados[((atual-1)*num_tickets)+0]);
+    Serial.println(chamados[((atual-1)*num_tickets)+1]);
+    Serial.println(chamados[((atual-1)*num_tickets)+2]);
+    Serial.println(chamados[((atual-1)*num_tickets)+3]);
+    Serial.println(chamados[((atual-1)*num_tickets)+4]);
+    Serial.println(chamados[((atual-1)*num_tickets)+5]);
     
     
     StaticJsonDocument<200> doc2;
 
-      doc2["Id"] = chamados[((atual-1)*7)+4];
+      doc2["Id"] = chamados[((atual-1)*num_tickets)+4];
       doc2["UserName"] = auxName;
       doc2["Ip"] = ipRelogio;
       
@@ -454,13 +455,13 @@ static void removefromArray(lv_obj_t *obj, lv_event_t event){
 
     for(i=pos; i<tam; i++)
           {
-              strcpy(chamados[(i*7)+0],chamados[(i*7)+7]);
-              strcpy(chamados[(i*7)+1],chamados[(i*7)+8]);
-              strcpy(chamados[(i*7)+2],chamados[(i*7)+9]);
-              strcpy(chamados[(i*7)+3],chamados[(i*7)+10]);
-              strcpy(chamados[(i*7)+4],chamados[(i*7)+11]);
-              strcpy(chamados[(i*7)+5],chamados[(i*7)+12]);
-              strcpy(chamados[(i*7)+6],chamados[(i*7)+13]);
+              strcpy(chamados[(i*num_tickets)+0],chamados[(i*num_tickets)+7]);
+              strcpy(chamados[(i*num_tickets)+1],chamados[(i*num_tickets)+8]);
+              strcpy(chamados[(i*num_tickets)+2],chamados[(i*num_tickets)+9]);
+              strcpy(chamados[(i*num_tickets)+3],chamados[(i*num_tickets)+10]);
+              strcpy(chamados[(i*num_tickets)+4],chamados[(i*num_tickets)+11]);
+              strcpy(chamados[(i*num_tickets)+5],chamados[(i*num_tickets)+12]);
+              strcpy(chamados[(i*num_tickets)+6],chamados[(i*num_tickets)+13]);
           };
 
 
@@ -486,7 +487,7 @@ void printCard(uint8_t posic){
 
     lv_obj_set_hidden(bg_card, true); 
 
-    if(strcmp(chamados[(posic*7)+5],"Open")==0){
+    if(strcmp(chamados[(posic*num_tickets)+5],"Open")==0){
       Serial.println("mostrei o botao");
       lv_obj_set_hidden(btn1, false); 
       
@@ -497,22 +498,22 @@ void printCard(uint8_t posic){
       
     }
     lv_obj_set_hidden(bg_card, false); 
-    lv_label_set_text(lbl_workstation,chamados[(posic*7)+0]);
-    lv_label_set_text(lbl_risk,chamados[(posic*7)+1]);
-    lv_label_set_text(lbl_calltime,chamados[(posic*7)+2]);
-    lv_label_set_text(lbl_description,chamados[(posic*7)+3]);
-    lv_label_set_text(lbl_status,chamados[(posic*7)+5]);
-    lv_label_set_text(lbl_user,chamados[(posic*7)+6]);
+    lv_label_set_text(lbl_workstation,chamados[(posic*num_tickets)+0]);
+    lv_label_set_text(lbl_risk,chamados[(posic*num_tickets)+1]);
+    lv_label_set_text(lbl_calltime,chamados[(posic*num_tickets)+2]);
+    lv_label_set_text(lbl_description,chamados[(posic*num_tickets)+3]);
+    lv_label_set_text(lbl_status,chamados[(posic*num_tickets)+5]);
+    lv_label_set_text(lbl_user,chamados[(posic*num_tickets)+6]);
 
     Serial.println("********8 MEU CARD *******");
 
-    Serial.println(chamados[(posic*7)+0]);
-    Serial.println(chamados[(posic*7)+1]);
-    Serial.println(chamados[(posic*7)+2]);
-    Serial.println(chamados[(posic*7)+3]);
-    Serial.println(chamados[(posic*7)+4]);
-    Serial.println(chamados[(posic*7)+5]);
-    Serial.println(chamados[(posic*7)+6]);
+    Serial.println(chamados[(posic*num_tickets)+0]);
+    Serial.println(chamados[(posic*num_tickets)+1]);
+    Serial.println(chamados[(posic*num_tickets)+2]);
+    Serial.println(chamados[(posic*num_tickets)+3]);
+    Serial.println(chamados[(posic*num_tickets)+4]);
+    Serial.println(chamados[(posic*num_tickets)+5]);
+    Serial.println(chamados[(posic*num_tickets)+6]);
     
 
 
@@ -684,17 +685,17 @@ Serial.println(rssi);
             BLisOn = true;
           }
         ttgo->motor->onec();
-        strcpy(chamados[(counter*7)+0],jsonObj["workstation"]);
+        strcpy(chamados[(counter*num_tickets)+0],jsonObj["workstation"]);
 
-        strcpy(chamados[(counter*7)+1],jsonObj["risk"]);
+        strcpy(chamados[(counter*num_tickets)+1],jsonObj["risk"]);
 
-        strcpy(chamados[(counter*7)+2],jsonObj["calltime"]);
+        strcpy(chamados[(counter*num_tickets)+2],jsonObj["calltime"]);
 
-        strcpy(chamados[(counter*7)+3],jsonObj["description"]);
+        strcpy(chamados[(counter*num_tickets)+3],jsonObj["description"]);
        
-        strcpy(chamados[(counter*7)+4],jsonObj["id"]);
-        strcpy(chamados[(counter*7)+5],"Open");
-        strcpy(chamados[(counter*7)+6],"");
+        strcpy(chamados[(counter*num_tickets)+4],jsonObj["id"]);
+        strcpy(chamados[(counter*num_tickets)+5],"Open");
+        strcpy(chamados[(counter*num_tickets)+6],"");
         counter = counter +1;
         atual = counter;
         printCard(counter-1);
@@ -730,7 +731,7 @@ Serial.println(rssi);
         
 
         
-        for (int i = 4; i <= ((counter*7)-3); i=i+7) {
+        for (int i = 4; i <= ((counter*num_tickets)-3); i=i+num_tickets) {
           Serial.print("Comparei ");
           Serial.print(chamados[i]);
           Serial.print(" com ");
@@ -753,7 +754,7 @@ Serial.println(rssi);
             Serial.println(chamados[i]);
             Serial.println(chamados[i+1]);
             Serial.println(chamados[i+2]);
-            atual=((i-4)/7)+1;
+            atual=((i-4)/num_tickets)+1;
             printCard(atual-1);
             break;
 
