@@ -650,12 +650,7 @@ void setup() {
         
       }
     
-    
-// char * mystr;
 
-//   Serial.println(rssi);
-//   sprintf(mystr,"Millis: %lu",rssi);
-//   Serial.println(mystr);
   
 
     Serial.print("Wifi IP: ");
