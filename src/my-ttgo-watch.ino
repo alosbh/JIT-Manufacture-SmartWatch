@@ -10,7 +10,7 @@
 #include <ESPAsyncWebServer.h>
 #include "esp_wpa2.h"
 #include "config.h"
-
+#define USE_SERIAL Serial
 // #define EAP_IDENTITY "100059527" 
 // #define EAP_PASSWORD "Sdesenha2016*"
 // const char* ssid = "JABOFF0003";
@@ -24,9 +24,17 @@ bool BLisOn = false;
 AsyncWebServer server(80);
 HTTPClient http;
 
-const char* serverName = "http://10.57.38.133:3000/reloginho";
+
+/************    APIS */
+
+char* GetWatchById_host = "http://10.57.16.40/JITAPI/Smartwatch/GetByIP/";
+
+
+/**************************** */
+char GetWatchById_Url[50] = {0};
 char ip_address[15];
 asyncHTTPrequest asyncrequest;
+asyncHTTPrequest getrequest;
 
 
 LV_FONT_DECLARE(fn1_32);
@@ -202,8 +210,8 @@ void SetupUI()
     g_data.minute = lv_label_create(view, nullptr);
     lv_obj_add_style(g_data.minute, LV_OBJ_PART_MAIN, &stl_clock);
     batlevel = (power->getBattVoltage()/100);
-    Serial.println("************** NIVEL DA BATERIA ************");
-    Serial.println(batlevel);
+    // Serial.println("************** NIVEL DA BATERIA ************");
+    // Serial.println(batlevel);
     sprintf (bufbat, "%.0f",batlevel);
     lv_label_set_text(g_data.minute,bufbat );
     lv_obj_align(g_data.minute, lbl_percentsignal, LV_ALIGN_IN_TOP_LEFT, -33, 0);
@@ -366,11 +374,11 @@ static void toggle_Cards_Off(){
 static void btn1_handler(lv_obj_t *obj, lv_event_t event)
 {
     if (event == LV_EVENT_CLICKED && atual >1) {
-        Serial.println("Clicked\n");
+        // Serial.println("Clicked\n");
     
     atual = atual-1;
-   Serial.println("back");
-  Serial.println();
+   // Serial.println("back");
+  // Serial.println();
   Serial.print(atual);
   Serial.print("/");
   Serial.print(counter);
@@ -382,11 +390,11 @@ static void btn1_handler(lv_obj_t *obj, lv_event_t event)
 static void btn2_handler(lv_obj_t *obj, lv_event_t event)
 {
      if (event == LV_EVENT_CLICKED && atual < counter) {
-        Serial.println("Clicked\n");
+        // Serial.println("Clicked\n");
     
     atual = atual+1;
-    Serial.println("next");
-  Serial.println();
+    // Serial.println("next");
+  // Serial.println();
   Serial.print(atual);
   Serial.print("/");
   Serial.print(counter);
@@ -401,26 +409,21 @@ void sendRequest(lv_obj_t *obj, lv_event_t event){
 
   if (event == LV_EVENT_CLICKED) {
 
-    
-    Serial.println(chamados[((atual-1)*num_tickets)+0]);
-    Serial.println(chamados[((atual-1)*num_tickets)+1]);
-    Serial.println(chamados[((atual-1)*num_tickets)+2]);
-    Serial.println(chamados[((atual-1)*num_tickets)+3]);
-    Serial.println(chamados[((atual-1)*num_tickets)+4]);
-    Serial.println(chamados[((atual-1)*num_tickets)+5]);
-    
-    
+     
     StaticJsonDocument<200> doc2;
 
-      doc2["Id"] = chamados[((atual-1)*num_tickets)+4];
-      doc2["UserName"] = auxName;
-      doc2["Ip"] = ipRelogio;
+      doc2["ticketId"] = chamados[((atual-1)*num_tickets)+4];
+      doc2["ip"] = ip_address;
       
       String requestBody;
       serializeJson(doc2, requestBody);
+
+      Serial.println("Request que vou fazer:");
+      Serial.println(requestBody);
     if(asyncrequest.readyState() == 0 || asyncrequest.readyState() == 4){
    
-        asyncrequest.open("POST", "http://10.57.16.40/AioWatch/Confirm");
+        lv_obj_set_hidden(btn1, true);
+        asyncrequest.open("POST", "http://10.57.16.40/JITAPI/Ticket/Confirm");
         // asyncrequest.open("POST", "http://10.57.38.133:3000/reloginho");
   
         asyncrequest.setReqHeader("Content-Type", "application/json");
@@ -430,6 +433,98 @@ void sendRequest(lv_obj_t *obj, lv_event_t event){
   }
 }
 
+void getWatchUser(){
+
+  
+
+
+    
+  
+
+    strcat(GetWatchById_Url, GetWatchById_host);
+    strcat(GetWatchById_Url, ip_address);
+    Serial.print("############ENDEREÇO DE API:");
+    Serial.println(GetWatchById_Url);
+
+    HTTPClient http;
+
+    StaticJsonDocument<200> result;
+    StaticJsonDocument<200> userjson;
+        USE_SERIAL.print("[HTTP] begin...\n");
+        // configure traged server and url
+        //http.begin("https://www.howsmyssl.com/a/check", ca); //HTTPS
+        http.begin(GetWatchById_Url); //HTTP
+
+        USE_SERIAL.print("[HTTP] GET...\n");
+        // start connection and send HTTP header
+        int httpCode = http.GET();
+
+        // httpCode will be negative on error
+        if(httpCode > 0) {
+            // HTTP header has been send and Server response header has been handled
+            USE_SERIAL.printf("[HTTP] GET... code: %d\n", httpCode);
+
+            // file found at server
+            if(httpCode == HTTP_CODE_OK) {
+                String payload = http.getString();
+                Serial.println(payload);
+                deserializeJson(result, payload);
+                // const char* id = result["user"]["id"];
+
+                Serial.println("##########");
+                // Serial.println(id);
+                // auto payload = "..."; // JSON content here
+                // StaticJsonDocument<1024> result;
+                deserializeJson(result, payload);
+                Serial.println(payload);
+                // Serial.println(result);
+                auto user = result["user"].as<const char*>();
+                Serial.println(user);
+                StaticJsonDocument<256> userObj;
+                deserializeJson(userObj, user);
+                auto id = userObj[0]["id"].as<int>();
+                auto text = userObj[0]["text"].as<const char*>();
+                Serial.println(id);
+                Serial.println(text);
+                // StaticJsonDocument<256> userObj;
+                // deserializeJson(userObj, user);
+                // auto id = userObj[0]["id"].as<int>();
+                // auto text = userObj[0]["text"].as<const char*>();
+                // Serial.println("#################");
+                // Serial.println(id);
+                // Serial.println(text);
+                // Serial.println("#################");
+    
+                
+                
+        } else {
+            USE_SERIAL.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+        }
+
+        http.end();
+    
+
+
+}
+}
+void charToString(const char S[], String &D)
+{
+ 
+ String rc(S);
+ D = rc;
+ 
+}
+
+void requestGetCB(void* optParm, asyncHTTPrequest* getrequest, int readyState){
+    if(readyState == 4){
+
+        Serial.println("RESPOSTA REQUEST");
+        Serial.println(readyState);
+        Serial.println(getrequest->responseText());
+        Serial.println();
+        getrequest->setDebug(false);
+    }
+}
 void requestCB(void* optParm, asyncHTTPrequest* asyncrequest, int readyState){
     if(readyState == 4){
         Serial.println("***********REQUEST CB ***********");
@@ -439,8 +534,6 @@ void requestCB(void* optParm, asyncHTTPrequest* asyncrequest, int readyState){
           Serial.println("Esse chamado deu certo sim");
         }
         
-        Serial.println();
-        // asyncrequest->setDebug(false);
     }
 }
 
@@ -448,33 +541,51 @@ static void removefromArray(lv_obj_t *obj, lv_event_t event){
 
   if (event == LV_EVENT_CLICKED) {
 
+    Serial.println("***********BOTAO VERMELHO ***********");
     uint8_t pos = atual-1;
     uint8_t tam = counter-1;
     uint8_t i;
 
+    Serial.print("Counter:");
+    Serial.println(counter);
+    Serial.print("Atual:");
+    Serial.println(atual);
+    Serial.print("Pos:");
+    Serial.println(pos);
+    Serial.print("Tam:");
+    Serial.println(tam);
+
 
     for(i=pos; i<tam; i++)
           {
-              strcpy(chamados[(i*num_tickets)+0],chamados[(i*num_tickets)+7]);
-              strcpy(chamados[(i*num_tickets)+1],chamados[(i*num_tickets)+8]);
-              strcpy(chamados[(i*num_tickets)+2],chamados[(i*num_tickets)+9]);
-              strcpy(chamados[(i*num_tickets)+3],chamados[(i*num_tickets)+10]);
-              strcpy(chamados[(i*num_tickets)+4],chamados[(i*num_tickets)+11]);
-              strcpy(chamados[(i*num_tickets)+5],chamados[(i*num_tickets)+12]);
-              strcpy(chamados[(i*num_tickets)+6],chamados[(i*num_tickets)+13]);
+
+              strcpy(chamados[(i*num_tickets)+0],chamados[(i*num_tickets)+num_tickets+0]);
+              strcpy(chamados[(i*num_tickets)+1],chamados[(i*num_tickets)+num_tickets+1]);
+              strcpy(chamados[(i*num_tickets)+2],chamados[(i*num_tickets)+num_tickets+2]);
+              strcpy(chamados[(i*num_tickets)+3],chamados[(i*num_tickets)+num_tickets+3]);
+              strcpy(chamados[(i*num_tickets)+4],chamados[(i*num_tickets)+num_tickets+4]);
+              strcpy(chamados[(i*num_tickets)+5],chamados[(i*num_tickets)+num_tickets+5]);
+              strcpy(chamados[(i*num_tickets)+6],chamados[(i*num_tickets)+num_tickets+6]);
           };
 
 
     counter--;
 
+    Serial.print("Counter:");
+    Serial.println(counter);
+    Serial.print("Atual:");
+    Serial.println(atual);
+
     if(atual==counter+1){
 
+      Serial.println("Atual = counter+1");
       atual = counter;
     }
 
     printCard(atual-1);
   }
   if(counter==0){
+      Serial.println("Counter=0");
       toggle_Cards_Off();
   }
   
@@ -488,12 +599,12 @@ void printCard(uint8_t posic){
     lv_obj_set_hidden(bg_card, true); 
 
     if(strcmp(chamados[(posic*num_tickets)+5],"Open")==0){
-      Serial.println("mostrei o botao");
+      // Serial.println("mostrei o botao");
       lv_obj_set_hidden(btn1, false); 
       
     }
     else{
-      Serial.println("escondi o botao");
+      // Serial.println("escondi o botao");
       lv_obj_set_hidden(btn1, true);
       
     }
@@ -505,26 +616,10 @@ void printCard(uint8_t posic){
     lv_label_set_text(lbl_status,chamados[(posic*num_tickets)+5]);
     lv_label_set_text(lbl_user,chamados[(posic*num_tickets)+6]);
 
-    Serial.println("********8 MEU CARD *******");
-
-    Serial.println(chamados[(posic*num_tickets)+0]);
-    Serial.println(chamados[(posic*num_tickets)+1]);
-    Serial.println(chamados[(posic*num_tickets)+2]);
-    Serial.println(chamados[(posic*num_tickets)+3]);
-    Serial.println(chamados[(posic*num_tickets)+4]);
-    Serial.println(chamados[(posic*num_tickets)+5]);
-    Serial.println(chamados[(posic*num_tickets)+6]);
-    
-
-
-
-
-
-Serial.println();
     Serial.print(atual);
     Serial.print("/");
     Serial.print(counter);
-    Serial.println();
+  
     sprintf (bufatual, "%d",atual);
   sprintf (buftotal, "%d",counter);
   lv_label_set_text(lbl_actualcard,bufatual);
@@ -589,79 +684,19 @@ void setup() {
     lv_label_set_text(lbl_IP,ip_address);
     
     
-    long rssi = WiFi.RSSI();
-    if(rssi <= -85 ){
-        Serial.print("rssi maior q 85 ");
-        lv_label_set_text(lbl_RSSI,"85+");
-        
-      }
-    if(rssi >-85 && rssi <= -80 ){
-        Serial.print("rssi entre 85 e 80 ");
-        lv_label_set_text(lbl_RSSI,"85~80");
-        
-      }
-    if(rssi >-80 && rssi <= -75 ){
-        Serial.print("rssi entre 80 e 75 ");
-        lv_label_set_text(lbl_RSSI,"80~75");
-        
-      }
-    if(rssi >-75 && rssi <= -70 ){
-        Serial.print("rssi entre 75 e 70 ");
-        lv_label_set_text(lbl_RSSI,"75~70");
-        
-      }
-    if(rssi >-70 && rssi <= -65 ){
-        Serial.print("rssi entre 70 e 65 ");
-        lv_label_set_text(lbl_RSSI,"70~65");
-        
-      }
-    if(rssi >-65 && rssi <= -60 ){
-        Serial.print("rssi entre 65 e 60 ");
-        lv_label_set_text(lbl_RSSI,"65~60");
-        
-      }
-      if(rssi >-60 && rssi <= -55 ){
-        Serial.print("rssi entre 60 e 55 ");
-        
-      }
-      if(rssi >-55 && rssi <= -50 ){
-        Serial.print("rssi entre 55 e 50 ");
-        lv_label_set_text(lbl_RSSI,"55~50");
-        
-      }
-      if(rssi >-50 && rssi <= -45 ){
-        Serial.print("rssi entre 50 e 45 ");
-        lv_label_set_text(lbl_RSSI,"50~45");
-        
-      }
-      if(rssi >-45 && rssi <= -40 ){
-        Serial.print("rssi entre 45 e 40 ");
-        lv_label_set_text(lbl_RSSI,"45~40");
-        
-      }
-      if(rssi >-40 && rssi <= -35 ){
-        Serial.print("rssi entre 40 e 35 ");
-        lv_label_set_text(lbl_RSSI,"40~35");
-        
-      }
-      if(rssi > -35 ){
-        Serial.print("rssi menor que 35 ");
-        lv_label_set_text(lbl_RSSI,"35-");
-        
-      }
-    
-
-  
 
     Serial.print("Wifi IP: ");
-    Serial.println(WiFi.localIP());
+    // Serial.println(WiFi.localIP());
+
+    
   
 
-  Serial.print("RSSI:");
-Serial.println(rssi);
+    getrequest.setDebug(true);
+    getrequest.onReadyStateChange(requestGetCB);
 
     asyncrequest.setDebug(true);
     asyncrequest.onReadyStateChange(requestCB);
+    getWatchUser();
 
     server.onNotFound(notFound);
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -670,9 +705,18 @@ Serial.println(rssi);
 
     AsyncCallbackJsonWebHandler* handler = new AsyncCallbackJsonWebHandler("/receberchamado", [](AsyncWebServerRequest *request, JsonVariant &json) {
   
+        Serial.println("********************************** /RECEBERCHAMADO");
         JsonObject jsonObj = json.as<JsonObject>();
 
-        if(BLisOn){
+        String atualizarchamadopayload;
+      serializeJson(jsonObj, atualizarchamadopayload);
+      Serial.println("esse eh o chamado q estou receebendo");
+      Serial.println(atualizarchamadopayload);
+        
+
+        if(!(counter==num_tickets)){
+
+          if(BLisOn){
           
           }
           else{
@@ -680,10 +724,31 @@ Serial.println(rssi);
             BLisOn = true;
           }
         ttgo->motor->onec();
-        strcpy(chamados[(counter*num_tickets)+0],jsonObj["workstation"]);
+          strcpy(chamados[(counter*num_tickets)+0],jsonObj["workstation"]);
+        
 
         strcpy(chamados[(counter*num_tickets)+1],jsonObj["risk"]);
+        Serial.println("TESTE DO RISCO");
+        
 
+        Serial.print("Bool 1:");
+        Serial.println(strcmp(chamados[(counter*num_tickets)+1],"1")==0);
+        Serial.print("Bool 2:");
+        Serial.println(strcmp(chamados[(counter*num_tickets)+1],"0")==0);
+        Serial.print("Bool 3:");
+        Serial.println(strcmp(chamados[(counter*num_tickets)+1],"1"));
+        Serial.print("Bool 4:");
+        Serial.println(strcmp(chamados[(counter*num_tickets)+1],"0"));
+        if(strcmp(chamados[(counter*num_tickets)+1],"1")==0){
+          sprintf(chamados[(counter*num_tickets)+1],"Rodando");
+          Serial.println("Linha rodando");
+        }
+        else if(strcmp(chamados[(counter*num_tickets)+1],"0")==0){
+          Serial.println("Linha parada");
+          sprintf(chamados[(counter*num_tickets)+1],"Parada");
+        }
+        Serial.println(strcmp(chamados[(counter*num_tickets)+1],"1"));
+        Serial.println(strcmp(chamados[(counter*num_tickets)+1],"0"));
         strcpy(chamados[(counter*num_tickets)+2],jsonObj["calltime"]);
 
         strcpy(chamados[(counter*num_tickets)+3],jsonObj["description"]);
@@ -698,13 +763,22 @@ Serial.println(rssi);
         toggle_Cards_On();
         
         request->send(200);
+        ttgo->motor->onec();
+        }
+        
 
     });
 
     AsyncCallbackJsonWebHandler* handler2 = new AsyncCallbackJsonWebHandler("/atualizarchamado", [](AsyncWebServerRequest *request, JsonVariant &json) {
   
+
+      Serial.println("********************************** /ATUALIZARCHAMADO");
         JsonObject jsonObj = json.as<JsonObject>();
 
+        String atualizarchamadopayload;
+      serializeJson(jsonObj, atualizarchamadopayload);
+      Serial.println("esse eh o chamado q estou receebendo");
+      Serial.println(atualizarchamadopayload);
         if(BLisOn){
             
           }
@@ -717,31 +791,54 @@ Serial.println(rssi);
         char idbuscado [3];
          char userbuscado [20];
          char statusbuscado [20];
-         Serial.println("ID RECEBIDA");
-        strcpy(idbuscado,jsonObj["Id"]);
+         char nomepeq[10] = "a";
+        strcpy(idbuscado,jsonObj["TicketId"]);
+        Serial.print("ID RECEBIDA:");
+        Serial.println(idbuscado);
+        
+        
         Serial.println("USUARIO RECEBIDO");
+        
+        // String name = jsonObj["UserName"];
+        // name.toCharArray(userbuscado,20);
         strcpy(userbuscado,jsonObj["UserName"]);
-        Serial.println("STATUS RECEBIDO");
-        strcpy(statusbuscado,jsonObj["Status"]);
-        
-
-        
-        for (int i = 4; i <= ((counter*num_tickets)-3); i=i+num_tickets) {
-          Serial.print("Comparei ");
-          Serial.print(chamados[i]);
-          Serial.print(" com ");
-          Serial.print(idbuscado);
-          Serial.println("Boolean:");
-          Serial.println(idbuscado==chamados[i]);
-
-          Serial.println("****ITERANDO***");
-          if(strcmp(chamados[i], idbuscado)==0){
-
+        Serial.println(userbuscado);
+        for(int z=0;z<10;z++){
+          Serial.println(userbuscado[z]);
+          
+          if(isWhitespace(userbuscado[z])) {
             
+            break;
+          }
+          else{
+            nomepeq[z]=userbuscado[z];
+
+          }
+        }
+         Serial.println("USUARIO trim");
+         Serial.println(nomepeq);
+        String stats = jsonObj["Status"];
+        stats.toCharArray(statusbuscado,20);
+        Serial.println("STATUS RECEBIDO");
+        // strcpy(statusbuscado,jsonObj["Status"]);
+        Serial.println(stats);
+        Serial.println(statusbuscado);
+        
+
+        Serial.print("Counter: ");
+        Serial.println(counter);
+        for (int i = 4; i <= ((counter*num_tickets)-3); i=i+num_tickets) {
+        Serial.print("i: ");
+        Serial.println(i);
+
+        Serial.print("Ids: ");
+        Serial.println(chamados[i]);
+
+           if(strcmp(chamados[i], idbuscado)==0){
+
             Serial.println("Achei meu chamado buscado");
             strcpy(chamados[i+1],statusbuscado);
-            strcpy(chamados[i+2],userbuscado);
-            
+            strcpy(chamados[i+2],nomepeq);
             Serial.println(chamados[i-4]);
             Serial.println(chamados[i-3]);
             Serial.println(chamados[i-2]);
@@ -751,15 +848,59 @@ Serial.println(rssi);
             Serial.println(chamados[i+2]);
             atual=((i-4)/num_tickets)+1;
             printCard(atual-1);
+            if(strcmp(statusbuscado,"Done")==0){
+              // Serial.println("===================ENTREI NO IF DO DONE");
+              removefromArray(btn2,LV_EVENT_CLICKED);
+            }
+            
             break;
-
-          }
-    
-    
+           }
         }
+          // Serial.print("Comparei ");
+          // Serial.print(chamados[i]);
+          // Serial.print(" com ");
+          // Serial.print(idbuscado);
+        //   // Serial.println("Boolean:");
+        //   // Serial.println(idbuscado==chamados[i]);
 
-        
+        //   // Serial.println("****ITERANDO***");
+        //   if(strcmp(chamados[i], idbuscado)==0){
+
+            
+        //     Serial.println("Achei meu chamado buscado");
+        //     strcpy(chamados[i+1],statusbuscado);
+        //     strcpy(chamados[i+2],userbuscado);
+            
+        //     // Serial.println(chamados[i-4]);
+        //     // Serial.println(chamados[i-3]);
+        //     // Serial.println(chamados[i-2]);
+        //     // Serial.println(chamados[i-1]);
+        //     // Serial.println(chamados[i]);
+        //     // Serial.println(chamados[i+1]);
+        //     // Serial.println(chamados[i+2]);
+        //     atual=((i-4)/num_tickets)+1;
+        //     printCard(atual-1);
+
+        //     // Serial.println("===================STATUS EH DONE OU NAO");
+        //       // Serial.println(statusbuscado);
+        //       // Serial.println(statusbuscado=="Done");
+        //       // Serial.println(strcmp(statusbuscado,"Done"));
+              
+        //     if(strcmp(statusbuscado,"Done")==0){
+        //       // Serial.println("===================ENTREI NO IF DO DONE");
+        //       removefromArray(btn2,LV_EVENT_CLICKED);
+        //     }
+            
+        //     break;
+
+        //   }
+    
+    
+        //}
+
+        Serial.println("Vou rodar agora a resposta do request");
         request->send(200);
+        ttgo->motor->onec();
 
     });
 
